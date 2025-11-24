@@ -1,0 +1,107 @@
+=======================================
+Dynamic pat with interface
+=======================================
+debug ip tcp packet
+
+object network LAN-PC-PRI
+ subnet 192.168.100.0 255.255.255.0
+ exit
+
+nat (LAN-PC,WAN) source dynamic LAN-PC-PRI interface
+
+show nat
+show xlate
+show conn long
+clear configure nat
+
+========================================
+Dynamic Pat with custom ip
+========================================
+debug ip tcp packet
+
+object network LAN-PC-PRI
+ subnet 192.168.100.0 255.255.255.0
+ exit
+
+object network PAT-CS-IP
+ host 200.1.10.5
+ exit
+
+nat (LAN-PC,WAN) source dynamic LAN-PC-PRI interface
+! or for PAT using 200.1.10.5
+! nat (LAN-PC,WAN) source dynamic LAN-PC-PRI PAT-CS-IP
+
+show nat
+show xlate
+show conn long
+clear configure nat
+----------------------------------------------
+output for 
+show nat
+show xlate
+----------------------------------------------
+
+Manual NAT Policies (Section 1)
+1 (LAN-PC) to (WAN) source dynamic LAN-PC-PRI PAT-CS-IP
+ translate_hits = 0, untranslate_hits = 0
+
+TCP PAT from LAN-PC:192.168.100.1/20237 to WAN:200.1.10.5/20237
+ flags ri idle 0:01:05 timeout 0:00:30
+
+TCP PAT from LAN-PC:192.168.100.2/49474 to WAN:200.1.10.5/49474
+ flags ri idle 0:00:21 timeout 0:00:30
+
+
+=========================================
+Dynamic Pat with Pat-Pool
+=========================================
+
+object network LAN-PC-PRI
+ subnet 192.168.100.0 255.255.255.0
+ exit
+
+object network PAT-POOL-IP
+ range 200.1.10.6 200.1.10.7
+ exit
+
+clear configure nat
+
+nat (LAN-PC,WAN) source dynamic LAN-PC-PRI PAT-POOL-IP
+
+debug ip tcp packet
+show nat
+show xlate
+show conn long
+
+-------------------------------------
+output for 
+show xlate
+debug ip tcp packet
+-----------------------------------------
+
+
+3 in use, 3 most used
+
+NAT from WAN:0.0.0.0/0 to LAN-PC:0.0.0.0/0
+ flags sIT idle 0:02:02 timeout 0:00:00
+
+TCP PAT from LAN-PC:192.168.100.1/40100 to WAN:200.1.10.6/40100
+ flags ri idle 0:00:58 timeout 0:00:30
+
+TCP PAT from LAN-PC:192.168.100.2/58271 to WAN:200.1.10.6/58271
+ flags ri idle 0:00:39 timeout 0:00:30
+
+--------------------------------------------------
+output for 
+debug ip tcp packet
+-------------------------------------------------
+
+tcp0: I ESTAB 200.1.10.6:40100 200.20.20.1:23
+ACK 3817320691 WIN 4128
+
+tcp0: I LISTEN 200.1.10.6:58271 200.20.20.1:23
+SYN WIN 4128
+
+tcp0: O SYNRCDV 200.1.10.6:58271 200.20.20.1:23
+ACK 1029193120 SYN WIN 4128
+-------------------------------------------------------
